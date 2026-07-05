@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppDynamics Academy — Suit Up. Watch Everything.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#060a10;
+  --bg2:#080e16;
+  --panel:#0d141d;
+  --panel2:#111b26;
+  --line:#1b2a38;
+  --line-bright:#26445a;
+  --cyan:#33e6ff;
+  --cyan-dim:#1592a8;
+  --cyan-soft:rgba(51,230,255,0.12);
+  --gold:#ffb627;
+  --gold-dim:#a87418;
+  --red:#ff3b52;
+  --red-soft:rgba(255,59,82,0.12);
+  --green:#3ddc84;
+  --green-soft:rgba(61,220,132,0.12);
+  --yellow:#ffd23f;
+  --text:#e8f1f6;
+  --text-dim:#93a9ba;
+  --text-mute:#54697a;
+  --font-display:'Orbitron',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:radial-gradient(ellipse 120% 80% at 50% -10%, #0c1826 0%, var(--bg) 45%, #04070b 100%);
+  color:var(--text);
+  font-family:var(--font-body);
+  overflow-x:hidden;
+  position:relative;
+}
+::selection{background:var(--cyan);color:#000;}
+a{color:inherit;text-decoration:none;}
+img{max-width:100%;}
+
+/* ============ SCANLINE / GRAIN OVERLAY ============ */
+.grain{
+  position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background-image:repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+  opacity:0.5;
+  mix-blend-mode:overlay;
+}
+.vignette{
+  position:fixed;inset:0;pointer-events:none;z-index:9998;
+  box-shadow:inset 0 0 220px rgba(0,0,0,0.75);
+}
+
+/* ============ TOP PROGRESS BAR ============ */
+.power-bar{
+  position:fixed;top:0;left:0;height:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--gold));
+  box-shadow:0 0 12px var(--cyan);
+  z-index:10000;
+  width:0%;
+  transition:width 0.1s linear;
+}
+
+/* ============ FLOATING HUD ICONS ============ */
+.bg-icons{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.bg-icons svg{position:absolute;opacity:0.09;filter:drop-shadow(0 0 8px var(--cyan));animation:drift 22s ease-in-out infinite;}
+.bg-icons svg:nth-child(1){top:8%;left:6%;width:70px;animation-duration:26s;}
+.bg-icons svg:nth-child(2){top:22%;left:85%;width:56px;animation-duration:19s;animation-delay:-4s;}
+.bg-icons svg:nth-child(3){top:65%;left:10%;width:64px;animation-duration:24s;animation-delay:-9s;}
+.bg-icons svg:nth-child(4){top:78%;left:80%;width:50px;animation-duration:21s;animation-delay:-2s;}
+.bg-icons svg:nth-child(5){top:40%;left:48%;width:44px;animation-duration:28s;animation-delay:-13s;opacity:0.06;}
+.bg-icons svg:nth-child(6){top:88%;left:35%;width:58px;animation-duration:23s;animation-delay:-6s;}
+@keyframes drift{
+  0%,100%{transform:translate(0,0) rotate(0deg);}
+  50%{transform:translate(18px,-26px) rotate(8deg);}
+}
+
+/* ============ RAIL NAV ============ */
+.railnav{
+  position:fixed;right:22px;top:50%;transform:translateY(-50%);
+  z-index:500;display:flex;flex-direction:column;gap:16px;
+}
+.railnav button{
+  width:10px;height:10px;border-radius:50%;
+  border:1px solid var(--line-bright);
+  background:transparent;cursor:pointer;
+  transition:all .3s;position:relative;
+}
+.railnav button::after{
+  content:attr(data-label);
+  position:absolute;right:22px;top:50%;transform:translateY(-50%);
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;
+  color:var(--text-mute);white-space:nowrap;opacity:0;transition:opacity .2s;
+}
+.railnav button:hover::after{opacity:1;color:var(--cyan);}
+.railnav button.active{
+  background:var(--cyan);border-color:var(--cyan);
+  box-shadow:0 0 10px var(--cyan),0 0 22px var(--cyan);
+}
+@media (max-width:900px){.railnav{display:none;}}
+
+/* ============ TOPBAR ============ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:400;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 32px;
+  backdrop-filter:blur(10px);
+  background:linear-gradient(180deg, rgba(6,10,16,0.85), rgba(6,10,16,0));
+  border-bottom:1px solid transparent;
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;letter-spacing:.06em;font-size:15px;}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan),0 0 18px var(--cyan);animation:corepulse 2.4s ease-in-out infinite;}
+.navlinks{display:flex;gap:26px;font-family:var(--font-mono);font-size:12px;letter-spacing:.05em;color:var(--text-dim);}
+.navlinks a{transition:color .2s;}
+.navlinks a:hover{color:var(--cyan);}
+@media (max-width:800px){.navlinks{display:none;}}
+
+/* ============ LAYOUT ============ */
+.section{
+  position:relative;z-index:1;
+  max-width:1180px;margin:0 auto;
+  padding:150px 32px 90px;
+}
+.eyebrow{
+  font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;
+  color:var(--cyan);text-transform:uppercase;margin-bottom:18px;
+  display:flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--cyan);box-shadow:0 0 6px var(--cyan);}
+h2.title{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(28px,4vw,46px);letter-spacing:.01em;
+  margin-bottom:18px;line-height:1.15;
+  background:linear-gradient(180deg,#fff,var(--text-dim));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+p.lead{font-size:17px;line-height:1.7;color:var(--text-dim);max-width:720px;margin-bottom:36px;}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease, transform .7s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+/* ============ HERO ============ */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding-top:80px;
+}
+.reactor-wrap{position:relative;width:340px;height:340px;margin-bottom:10px;}
+.reactor-wrap svg{width:100%;height:100%;}
+.ring-outer{animation:spin 30s linear infinite;transform-origin:170px 170px;}
+.ring-mid{animation:spinrev 22s linear infinite;transform-origin:170px 170px;}
+.ring-inner{animation:spin 14s linear infinite;transform-origin:170px 170px;}
+.core-glow{animation:corepulse 2.4s ease-in-out infinite;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes spinrev{from{transform:rotate(360deg);}to{transform:rotate(0deg);}}
+@keyframes corepulse{0%,100%{filter:drop-shadow(0 0 14px var(--cyan)) drop-shadow(0 0 2px #fff);}50%{filter:drop-shadow(0 0 38px var(--cyan)) drop-shadow(0 0 8px #fff);}}
+
+.hero .eyebrow{justify-content:center;margin-top:8px;}
+.hero .eyebrow::before{display:none;}
+h1.herotitle{
+  font-family:var(--font-display);font-weight:900;
+  font-size:clamp(34px,6.4vw,74px);line-height:1.02;letter-spacing:.005em;
+  margin:10px 0 20px;
+  background:linear-gradient(180deg,#ffffff 10%, var(--cyan) 60%, var(--cyan-dim) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 60px rgba(51,230,255,0.25);
+}
+h1.herotitle .accent{color:var(--gold);-webkit-text-fill-color:var(--gold);}
+p.herosub{
+  font-size:18px;color:var(--text-dim);max-width:600px;line-height:1.7;margin-bottom:34px;
+  font-family:var(--font-body);
+}
+.cta-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+.btn{
+  font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;
+  padding:14px 30px;border-radius:3px;cursor:pointer;
+  border:1px solid var(--cyan);background:var(--cyan-soft);color:var(--cyan);
+  transition:all .25s;text-transform:uppercase;
+}
+.btn:hover{background:var(--cyan);color:#04141a;box-shadow:0 0 24px var(--cyan);}
+.btn.ghost{border-color:var(--line-bright);background:transparent;color:var(--text-dim);}
+.btn.ghost:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 18px rgba(255,182,39,0.3);}
+.scrollcue{margin-top:56px;font-family:var(--font-mono);font-size:11px;color:var(--text-mute);letter-spacing:.2em;animation:bob 2s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0);opacity:.5;}50%{transform:translateY(8px);opacity:1;}}
+
+/* ============ CARD GRID (layers / components) ============ */
+.grid{display:grid;gap:20px;grid-template-columns:repeat(2,1fr);}
+@media (max-width:760px){.grid{grid-template-columns:1fr;}}
+.grid.cols-4{grid-template-columns:repeat(4,1fr);}
+@media (max-width:1000px){.grid.cols-4{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:600px){.grid.cols-4{grid-template-columns:1fr;}}
+
+.card{
+  background:linear-gradient(160deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:8px;
+  padding:26px;position:relative;overflow:hidden;
+  transition:transform .3s, border-color .3s, box-shadow .3s;
+}
+.card::before{
+  content:"";position:absolute;top:0;left:0;width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.card:hover{transform:translateY(-5px);border-color:var(--line-bright);box-shadow:0 14px 40px rgba(0,0,0,0.4);}
+.card:hover::before{opacity:1;}
+.card .icon{width:38px;height:38px;color:var(--cyan);margin-bottom:14px;filter:drop-shadow(0 0 8px rgba(51,230,255,0.4));}
+.card h3{font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:10px;letter-spacing:.02em;}
+.card p{font-size:14px;line-height:1.65;color:var(--text-dim);}
+.card .tag{
+  display:inline-block;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;
+  color:var(--gold);border:1px solid var(--gold-dim);padding:3px 8px;border-radius:20px;
+  margin-bottom:12px;text-transform:uppercase;
+}
+
+/* ============ MTTR CALLOUT ============ */
+.callout{
+  margin-top:14px;border-left:2px solid var(--gold);
+  background:linear-gradient(90deg,rgba(255,182,39,0.08),transparent);
+  padding:20px 26px;border-radius:0 8px 8px 0;
+}
+.callout strong{color:var(--gold);font-family:var(--font-mono);}
+.callout p{color:var(--text-dim);font-size:15px;line-height:1.7;margin-top:6px;}
+
+/* ============ ARCHITECTURE DIAGRAM ============ */
+.diagram{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:40px 24px;margin:20px 0 44px;overflow-x:auto;
+}
+.diagram svg{width:100%;min-width:640px;display:block;margin:0 auto;}
+
+/* ============ TIMELINE (install) ============ */
+.timeline{position:relative;padding-left:40px;}
+.timeline::before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--cyan),var(--line));}
+.step{position:relative;padding-bottom:34px;}
+.step:last-child{padding-bottom:0;}
+.step::before{
+  content:attr(data-n);position:absolute;left:-40px;top:0;width:24px;height:24px;
+  border-radius:50%;background:var(--bg);border:2px solid var(--cyan);
+  color:var(--cyan);font-family:var(--font-mono);font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 10px rgba(51,230,255,0.5);
+}
+.step h4{font-family:var(--font-display);font-size:16px;margin-bottom:6px;letter-spacing:.02em;}
+.step .badge{display:inline-block;font-family:var(--font-mono);font-size:10px;color:var(--red);border:1px solid var(--red);padding:1px 7px;border-radius:20px;margin-left:8px;vertical-align:middle;text-transform:uppercase;}
+.step p{color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:10px;}
+.step code.block{
+  display:block;background:#04080d;border:1px solid var(--line);border-radius:6px;
+  padding:12px 16px;font-family:var(--font-mono);font-size:12.5px;color:var(--green);
+  white-space:pre-wrap;overflow-x:auto;margin-bottom:8px;
+}
+.step ul{list-style:none;padding-left:2px;}
+.step ul li{font-size:13.5px;color:var(--text-mute);padding-left:16px;position:relative;margin-bottom:4px;}
+.step ul li::before{content:"›";position:absolute;left:0;color:var(--cyan-dim);}
+
+/* ============ AGENTS ============ */
+.agent-card{position:relative;}
+.agent-card .pulse-dot{
+  position:absolute;top:24px;right:24px;width:8px;height:8px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 8px var(--green);animation:corepulse 1.8s infinite;
+}
+
+/* ============ PORTAL SUBSECTIONS ============ */
+.subblock{margin-bottom:64px;}
+.subblock:last-child{margin-bottom:0;}
+.subhead{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;}
+.subhead .num{font-family:var(--font-mono);color:var(--text-mute);font-size:13px;}
+.subhead h3{font-family:var(--font-display);font-size:22px;font-weight:700;}
+.subblock p.desc{color:var(--text-dim);font-size:15px;line-height:1.75;max-width:760px;margin-bottom:16px;}
+
+.scorecard-row{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0;}
+.scorepill{
+  font-family:var(--font-mono);font-size:12px;padding:8px 14px;border-radius:20px;
+  border:1px solid var(--line);display:flex;align-items:center;gap:8px;
+}
+.scorepill .sw{width:8px;height:8px;border-radius:50%;}
+.scorepill.green{border-color:var(--green);}
+.scorepill.green .sw{background:var(--green);box-shadow:0 0 6px var(--green);}
+.scorepill.yellow{border-color:var(--yellow);}
+.scorepill.yellow .sw{background:var(--yellow);box-shadow:0 0 6px var(--yellow);}
+.scorepill.red{border-color:var(--red);}
+.scorepill.red .sw{background:var(--red);box-shadow:0 0 6px var(--red);}
+
+.callgraph-legend{display:flex;gap:20px;margin-top:10px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);font-family:var(--font-mono);}
+.legend-swatch{width:14px;height:14px;border-radius:3px;}
+.legend-swatch.blue{background:#2f7ee6;}
+.legend-swatch.grey{background:#5a6472;}
+
+.jvm-split{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px;}
+@media (max-width:700px){.jvm-split{grid-template-columns:1fr;}}
+.jvm-box{border:1px solid var(--line);border-radius:8px;padding:18px 20px;background:var(--panel);}
+.jvm-box h4{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;color:var(--cyan);text-transform:uppercase;margin-bottom:10px;}
+.jvm-box ul{list-style:none;}
+.jvm-box li{font-size:13.5px;color:var(--text-dim);padding:5px 0;border-bottom:1px dashed var(--line);}
+.jvm-box li:last-child{border-bottom:none;}
+
+.health-band{display:flex;height:14px;border-radius:8px;overflow:hidden;margin:20px 0 10px;border:1px solid var(--line);}
+.health-band div{height:100%;}
+.hb-green{background:var(--green);flex:2;}
+.hb-yellow{background:var(--yellow);flex:1;}
+.hb-red{background:var(--red);flex:1;}
+.health-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--text-mute);}
+
+/* ============ QUIZ ============ */
+.quiz-section{padding-top:150px;}
+.quiz-header{text-align:center;margin-bottom:36px;}
+.reactor-mini{width:110px;height:110px;margin:0 auto 20px;position:relative;}
+.reactor-mini svg{width:100%;height:100%;}
+.charge-track{
+  max-width:420px;margin:0 auto 8px;height:8px;border-radius:6px;
+  background:var(--panel2);border:1px solid var(--line);overflow:hidden;
+}
+.charge-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--gold));transition:width .5s ease;box-shadow:0 0 10px var(--cyan);}
+.charge-label{text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--text-mute);letter-spacing:.1em;margin-bottom:30px;}
+
+.quiz-card{
+  max-width:680px;margin:0 auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:36px 34px;position:relative;
+}
+.quiz-progress{font-family:var(--font-mono);font-size:11px;color:var(--cyan);letter-spacing:.1em;margin-bottom:14px;}
+.quiz-q{font-family:var(--font-display);font-size:19px;font-weight:700;line-height:1.4;margin-bottom:24px;}
+.quiz-opts{display:flex;flex-direction:column;gap:10px;}
+.opt{
+  text-align:left;padding:14px 18px;border-radius:7px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--text);font-family:var(--font-body);font-size:14.5px;
+  cursor:pointer;transition:all .2s;
+}
+.opt:hover{border-color:var(--cyan-dim);background:#0f1c26;}
+.opt.correct{border-color:var(--green);background:var(--green-soft);color:var(--green);}
+.opt.wrong{border-color:var(--red);background:var(--red-soft);color:var(--red);}
+.opt:disabled{cursor:default;}
+.quiz-explain{
+  margin-top:20px;padding:16px 18px;border-radius:7px;background:var(--panel2);
+  border-left:2px solid var(--cyan);font-size:13.5px;color:var(--text-dim);line-height:1.6;
+  display:none;
+}
+.quiz-nextrow{display:flex;justify-content:flex-end;margin-top:24px;}
+.quiz-result{text-align:center;display:none;}
+.quiz-result .rank{font-family:var(--font-display);font-size:32px;font-weight:800;color:var(--gold);margin:14px 0 6px;}
+.quiz-result .score{font-family:var(--font-mono);color:var(--text-dim);margin-bottom:22px;}
+.quiz-result p.verdict{max-width:520px;margin:0 auto 26px;color:var(--text-dim);line-height:1.7;font-size:14.5px;}
+
+/* ============ FOOTER ============ */
+footer{
+  position:relative;z-index:1;text-align:center;padding:80px 32px 60px;
+  border-top:1px solid var(--line);margin-top:40px;
+}
+footer .brand{justify-content:center;margin-bottom:16px;}
+footer p{color:var(--text-mute);font-size:13px;font-family:var(--font-mono);letter-spacing:.03em;}
+footer .cta-row{margin-top:24px;}
+
+/* ============ REDUCED MOTION ============ */
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:0.001s !important;animation-iteration-count:1 !important;transition-duration:0.001s !important;}
+  html{scroll-behavior:auto;}
+}
+
+/* focus visibility */
+button:focus-visible, .opt:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<div class="power-bar" id="powerBar"></div>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<div class="bg-icons">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--cyan)"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--gold)"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--cyan)"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--gold)"><path d="M3 17l5-5 4 4 8-8"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--cyan)"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2 2M17.1 17.1l2 2M4.9 19.1l2-2M17.1 6.9l2-2"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--gold)"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1M2 12h3M19 12h3"/></svg>
+</div>
+
+<nav class="railnav" id="railnav">
+  <button data-target="hero" data-label="CORE"></button>
+  <button data-target="overview" data-label="OVERVIEW"></button>
+  <button data-target="architecture" data-label="ARCHITECTURE"></button>
+  <button data-target="install" data-label="INSTALL"></button>
+  <button data-target="agents" data-label="AGENTS"></button>
+  <button data-target="portal" data-label="PORTAL"></button>
+  <button data-target="quiz" data-label="QUIZ"></button>
+</nav>
+
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> APPDYNAMICS ACADEMY</div>
+  <div class="navlinks">
+    <a href="#overview">Overview</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#install">Install</a>
+    <a href="#agents">Agents</a>
+    <a href="#portal">Portal</a>
+    <a href="#quiz">Quiz</a>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="section hero" id="hero">
+  <div class="reactor-wrap">
+    <svg viewBox="0 0 340 340">
+      <defs>
+        <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="35%" stop-color="#33e6ff"/>
+          <stop offset="100%" stop-color="#0a2530"/>
+        </radialGradient>
+      </defs>
+      <g class="ring-outer" stroke="#1b2a38" fill="none">
+        <circle cx="170" cy="170" r="160" stroke="#1e3444" stroke-width="1.5"/>
+        <circle cx="170" cy="170" r="160" stroke="#33e6ff" stroke-width="2" stroke-dasharray="10 14" opacity="0.55"/>
+      </g>
+      <g class="ring-mid" stroke="#26445a" fill="none">
+        <circle cx="170" cy="170" r="128" stroke-width="1"/>
+        <circle cx="170" cy="170" r="128" stroke="#ffb627" stroke-width="1.5" stroke-dasharray="2 10" opacity="0.7"/>
+      </g>
+      <g class="ring-inner" stroke="#33e6ff" fill="none">
+        <circle cx="170" cy="170" r="96" stroke-width="1.5" stroke-dasharray="30 4"/>
+      </g>
+      <g class="core-glow">
+        <circle cx="170" cy="170" r="60" fill="url(#coreGrad)"/>
+        <polygon points="170,120 200,150 190,190 150,190 140,150" fill="#04141a" stroke="#33e6ff" stroke-width="1.5"/>
+      </g>
+    </svg>
+  </div>
+  <div class="eyebrow">SYSTEMS ONLINE // OBSERVABILITY SUIT CALIBRATED</div>
+  <h1 class="herotitle">AppDynamics,<br>Fully Suited <span class="accent">Up.</span></h1>
+  <p class="herosub">Every application has a heartbeat. This is the arc reactor that keeps it visible — down to the millisecond, the method call, and the memory leak nobody noticed yet. Suit up. We're going deep.</p>
+  <div class="cta-row">
+    <button class="btn" onclick="scrollToId('overview')">Power On →</button>
+    <button class="btn ghost" onclick="scrollToId('quiz')">Skip to the Quiz</button>
+  </div>
+  <div class="scrollcue">▾ SCROLL TO CALIBRATE ▾</div>
+</section>
+
+<!-- ================= OVERVIEW ================= -->
+<section class="section" id="overview">
+  <div class="eyebrow reveal">01 — SYSTEM OVERVIEW</div>
+  <h2 class="title reveal">What AppDynamics Actually Watches</h2>
+  <p class="lead reveal">APM stands for <strong style="color:var(--text)">Application Performance Monitoring</strong> (some say Management) — the discipline of watching how software actually behaves in production, and catching the failure before your users report it for you. AppDynamics is a suit built for exactly that: instrumented sensors on every tier, feeding one brain, so you can find the bottleneck before it finds you.</p>
+
+  <div class="grid cols-4 reveal">
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg></div>
+      <span class="tag">Application</span>
+      <h3>Code Layer</h3>
+      <p>Profiling tools instrument the running code itself — methods, threads, exceptions — so you see exactly what the application is doing, not just that it's slow.</p>
+    </div>
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+      <span class="tag">Infrastructure</span>
+      <h3>Infra Layer</h3>
+      <p>Tools like perfmon, nmon, vmstat, and SiteScope watch the hardware and OS underneath — CPU, memory, disk I/O, network — the plumbing the app depends on.</p>
+    </div>
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div>
+      <span class="tag">Database</span>
+      <h3>Data Layer</h3>
+      <p>DB profilers, AWR reports, and ADDM reports find the query that's actually holding everything up — locks, waits, and execution plans included.</p>
+    </div>
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M2 8h20"/></svg></div>
+      <span class="tag">Browser</span>
+      <h3>End-User Layer</h3>
+      <p>Dev tools, WebPageTest, and GTmetrix show what the person on the other end of the connection actually experiences while the page loads.</p>
+    </div>
+  </div>
+
+  <div class="callout reveal">
+    <strong>WHY IT ALL MATTERS: MTTR</strong>
+    <p>Collecting metrics is easy. Finding the <em>root cause</em> fast is the job. AppDynamics and tools like it exist to shrink <strong>MTTR</strong> — Mean Time To Repair (or Recovery) — the clock that starts the second something breaks and doesn't stop until it's fixed. A tool stack that gives you dashboards but no root cause is a suit with lights and no repulsors.</p>
+  </div>
+
+  <div class="grid reveal" style="margin-top:20px;">
+    <div class="card">
+      <span class="tag">RUM</span>
+      <h3>Real User Monitoring</h3>
+      <p>Passive observation of actual live traffic — real people, real browsers, real network conditions — hitting your application right now.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Synthetic</span>
+      <h3>Synthetic Monitoring</h3>
+      <p>A scripted job that launches a scripted browser flow on a schedule, simulating a user journey automatically — so you catch a problem even at 3 a.m. when no real traffic is flowing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ARCHITECTURE ================= -->
+<section class="section" id="architecture">
+  <div class="eyebrow reveal">02 — ANATOMY OF THE SUIT</div>
+  <h2 class="title reveal">Controller, Agents & the Nervous System</h2>
+  <p class="lead reveal">Two deployment flavors exist: <strong style="color:var(--text)">SaaS</strong>, where AppDynamics hosts the Controller for you and you just launch its URL, and <strong style="color:var(--text)">On-Premise</strong>, where you run the whole stack yourself via the Enterprise Console. Either way, the anatomy is the same.</p>
+
+  <div class="diagram reveal">
+    <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#33e6ff"/></marker>
+      </defs>
+      <!-- agents -->
+      <g font-family="JetBrains Mono" font-size="11" fill="#93a9ba">
+        <rect x="20" y="40" width="140" height="42" rx="6" fill="#111b26" stroke="#26445a"/>
+        <text x="90" y="65" text-anchor="middle" fill="#33e6ff">Java Agent</text>
+        <rect x="20" y="100" width="140" height="42" rx="6" fill="#111b26" stroke="#26445a"/>
+        <text x="90" y="125" text-anchor="middle" fill="#33e6ff">Machine Agent</text>
+        <rect x="20" y="160" width="140" height="42" rx="6" fill="#111b26" stroke="#26445a"/>
+        <text x="90" y="185" text-anchor="middle" fill="#33e6ff">DB Agent</text>
+      </g>
+      <!-- lines to controller -->
+      <path d="M160,61 C240,61 240,130 330,130" stroke="#33e6ff" fill="none" stroke-width="1.4" marker-end="url(#arrow)" opacity="0.7"/>
+      <path d="M160,121 C240,121 240,130 330,130" stroke="#33e6ff" fill="none" stroke-width="1.4" marker-end="url(#arrow)" opacity="0.7"/>
+      <path d="M160,181 C240,181 240,130 330,130" stroke="#33e6ff" fill="none" stroke-width="1.4" marker-end="url(#arrow)" opacity="0.7"/>
+      <!-- controller core -->
+      <circle cx="380" cy="130" r="58" fill="url(#coreGrad2)" stroke="#33e6ff" stroke-width="1.5"/>
+      <defs>
+        <radialGradient id="coreGrad2" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#0f2530"/>
+          <stop offset="100%" stop-color="#04101a"/>
+        </radialGradient>
+      </defs>
+      <text x="380" y="126" text-anchor="middle" font-family="Orbitron" font-weight="700" font-size="13" fill="#33e6ff">CONTROLLER</text>
+      <text x="380" y="142" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#93a9ba">the brain</text>
+      <!-- to events service -->
+      <path d="M438,130 C520,130 520,80 610,80" stroke="#ffb627" fill="none" stroke-width="1.4" marker-end="url(#arrow2)" opacity="0.8"/>
+      <path d="M438,130 C520,130 520,180 610,180" stroke="#ffb627" fill="none" stroke-width="1.4" marker-end="url(#arrow2)" opacity="0.8"/>
+      <defs><marker id="arrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#ffb627"/></marker></defs>
+      <rect x="610" y="58" width="150" height="44" rx="6" fill="#111b26" stroke="#a87418"/>
+      <text x="685" y="84" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#ffb627">Events Service</text>
+      <rect x="610" y="158" width="150" height="44" rx="6" fill="#111b26" stroke="#a87418"/>
+      <text x="685" y="184" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#ffb627">Portal UI</text>
+      <!-- outputs -->
+      <path d="M760,80 C820,80 820,80 860,80" stroke="#5a6472" fill="none" stroke-width="1.2" marker-end="url(#arrow3)"/>
+      <path d="M760,180 C820,180 820,180 860,180" stroke="#5a6472" fill="none" stroke-width="1.2" marker-end="url(#arrow3)"/>
+      <defs><marker id="arrow3" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#5a6472"/></marker></defs>
+      <text x="20" y="230" font-family="JetBrains Mono" font-size="10" fill="#54697a">agents report metrics ↑</text>
+      <text x="610" y="230" font-family="JetBrains Mono" font-size="10" fill="#54697a">controller stores &amp; serves ↑</text>
+    </svg>
+  </div>
+
+  <div class="grid reveal">
+    <div class="card">
+      <span class="tag">The Brain</span>
+      <h3>Controller</h3>
+      <p>The central nervous system. Stores configuration, tiers, nodes, health rules, and metric history, and serves the dashboard UI you actually click around in. Nothing works without it.</p>
+    </div>
+    <div class="card">
+      <span class="tag">The Memory</span>
+      <h3>Events Service</h3>
+      <p>A dedicated store built for high-volume events — health rule violations, transaction snapshots, logs — so the Controller doesn't drown trying to hold everything itself.</p>
+    </div>
+    <div class="card">
+      <span class="tag">The Nerve Endings</span>
+      <h3>Agents</h3>
+      <p>Small processes embedded in your tiers — Java, Machine, DB, or Browser — that instrument what's actually happening and phone it home to the Controller in real time.</p>
+    </div>
+    <div class="card">
+      <span class="tag">On-Prem Only</span>
+      <h3>Enterprise Console</h3>
+      <p>The installer-of-installers for self-hosted deployments — it's what stands up and manages the Controller, MySQL, Events Service, and Search Service on your own infrastructure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INSTALL ================= -->
+<section class="section" id="install">
+  <div class="eyebrow reveal">03 — SUIT ASSEMBLY</div>
+  <h2 class="title reveal">Installing the Controller on Ubuntu 22.04</h2>
+  <p class="lead reveal">This is the on-premise path — bolting the reactor into the chest plate yourself. Ten steps, start to finish, from a bare Ubuntu box to a running Controller with your first application defined.</p>
+
+  <div class="timeline reveal">
+    <div class="step" data-n="1">
+      <h4>Prepare Ubuntu 22.04</h4>
+      <p>Update the box and make sure the environment is ready before anything else gets installed.</p>
+      <code class="block">sudo apt update &amp;&amp; sudo apt upgrade -y</code>
+      <ul><li>Reboot after the upgrade</li><li>Make sure your hostname is set — the Controller uses it internally</li><li>Install a Java runtime if your environment requires one</li></ul>
+    </div>
+    <div class="step" data-n="2">
+      <h4>Create a Controller User <span class="badge">Recommended</span></h4>
+      <p>The Controller should run under its own dedicated system user, not root.</p>
+      <code class="block">sudo useradd -m -d /home/appd -s /bin/bash appd
+sudo passwd appd
+sudo usermod -aG sudo appd</code>
+    </div>
+    <div class="step" data-n="3">
+      <h4>Download the Controller Installer</h4>
+      <p>Grab the Linux on-premise Controller <code style="color:var(--gold)">.bin</code> installer from the AppDynamics download portal.</p>
+      <code class="block">cd /opt/appdynamics</code>
+      <ul><li>Log in to the AppDynamics download portal</li><li>Download <code style="color:var(--gold)">controller_64bit_linux-x.x.x.x.bin</code></li><li>Move it into <code style="color:var(--gold)">/opt/appdynamics/</code></li></ul>
+    </div>
+    <div class="step" data-n="4">
+      <h4>Make the Installer Executable</h4>
+      <p>It's a self-extracting binary — it needs permission to run.</p>
+      <code class="block">chmod +x controller_64bit_linux-x.x.x.x.bin</code>
+    </div>
+    <div class="step" data-n="5">
+      <h4>Run the Controller Installer <span class="badge">Critical</span></h4>
+      <p>This single step installs the Controller, MySQL, the Events Service, and the Search Service together.</p>
+      <code class="block">sudo ./controller_64bit_linux-x.x.x.x.bin</code>
+      <ul><li>Accept the license agreement</li><li>Choose the default ports unless you have a reason not to</li><li>Provide the <code style="color:var(--gold)">appd</code> user you created earlier</li><li>The installer configures MySQL automatically</li></ul>
+    </div>
+    <div class="step" data-n="6">
+      <h4>Start Controller Services</h4>
+      <p>Bring everything online and confirm it actually stayed online.</p>
+      <code class="block">sudo service appdcontroller start</code>
+      <ul><li>Verify MySQL is running</li><li>Verify the Events Service is running</li><li>Check logs in <code style="color:var(--gold)">/opt/appdynamics/controller/logs/</code></li></ul>
+    </div>
+    <div class="step" data-n="7">
+      <h4>Access the Controller GUI</h4>
+      <p>Open the dashboard in a browser for the first time.</p>
+      <code class="block">http://&lt;your-server-ip&gt;:8090/controller</code>
+      <ul><li>Log in with the default admin account created during install</li><li>Verify the Controller loads cleanly</li></ul>
+    </div>
+    <div class="step" data-n="8">
+      <h4>Apply Your License <span class="badge">Required</span></h4>
+      <p>The Controller won't accept agent connections without one.</p>
+      <ul><li>Upload the license file in the Controller GUI</li><li>Verify which modules it unlocks — APM, Machine Agent, and so on</li></ul>
+    </div>
+    <div class="step" data-n="9">
+      <h4>Create Your First Application</h4>
+      <p>An application has to exist before any agent has somewhere to report to.</p>
+      <ul><li>Go to <em>Applications → Create Application</em></li><li>Name it — for example, <code style="color:var(--gold)">UbuntuTestApp</code></li><li>Create a Tier and a Node underneath it</li></ul>
+    </div>
+    <div class="step" data-n="10">
+      <h4>Install Agents on Linux</h4>
+      <p>With the Controller live, the nerve endings can finally connect.</p>
+      <ul><li>Download a Java Agent or Machine Agent</li><li>Configure <code style="color:var(--gold)">controller-info.xml</code> to point at your Controller</li><li>Restart the application so the agent loads</li><li>Confirm metrics start flowing into the Controller</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= AGENTS ================= -->
+<section class="section" id="agents">
+  <div class="eyebrow reveal">04 — THE NERVE ENDINGS</div>
+  <h2 class="title reveal">Every Agent, and What It Actually Senses</h2>
+  <p class="lead reveal">A Controller with no agents is a helmet with no visor. Each agent type wires up a different sense — code execution, hardware, database internals, or the browser itself.</p>
+
+  <div class="grid reveal">
+    <div class="card agent-card">
+      <div class="pulse-dot"></div>
+      <span class="tag">app tier</span>
+      <h3>Java Agent</h3>
+      <p>Attaches directly to the JVM of your application and instruments methods, threads, and calls in real time. This is what generates business transactions, call graphs, and JVM/heap data.</p>
+    </div>
+    <div class="card agent-card">
+      <div class="pulse-dot"></div>
+      <span class="tag">host / OS</span>
+      <h3>Machine Agent</h3>
+      <p>Watches the server itself — CPU, memory, disk I/O, network. Without it running, the Controller's "Servers" tab for that node simply stays empty, even if the app agent is reporting fine.</p>
+    </div>
+    <div class="card agent-card">
+      <div class="pulse-dot"></div>
+      <span class="tag">data layer</span>
+      <h3>DB Agent</h3>
+      <p>Runs as its own small process — <code style="color:var(--gold)">java -jar db-agent.jar</code> — and monitors database hardware and health: CPU, memory, I/O, live sessions, wait states, and connected clients.</p>
+    </div>
+    <div class="card agent-card">
+      <div class="pulse-dot"></div>
+      <span class="tag">front end</span>
+      <h3>Browser / EUM Agent</h3>
+      <p>Captures real end-user page-load experience (RUM) or drives a scripted flow on a schedule (Synthetic) — the only agent that sees the app the way an actual person does.</p>
+    </div>
+  </div>
+
+  <div class="callout reveal" style="margin-top:28px;">
+    <strong>WORKED EXAMPLE: NODE.JS + EXPRESS</strong>
+    <p>Set your application name and tier name (say, <code style="color:var(--text)">express</code>), install the app agent, then paste your account's license line on the first line of your entry file. Start the process with <code style="color:var(--text)">node app.js</code> — the moment it boots, the tier lights up in the Controller. The same instinct applies whether it's Java, Node, or a DB agent: configure it, point it at the Controller, restart the process, and watch for the first metric to land.</p>
+  </div>
+</section>
+
+<!-- ================= PORTAL ================= -->
+<section class="section" id="portal">
+  <div class="eyebrow reveal">05 — FLYING THE SUIT</div>
+  <h2 class="title reveal">Navigating the Portal Like a Pro</h2>
+  <p class="lead reveal">This is the HUD. Once agents are reporting, everything below is where you actually live day to day — from the first glance at the flow map to a full root-cause war room.</p>
+
+  <div class="subblock reveal">
+    <div class="subhead"><span class="num">5.1</span><h3>Dashboard &amp; Application Flow Map</h3></div>
+    <p class="desc">The flow map is the suit's radar: a live diagram of every tier, every node, and the traffic moving between them right now. It's usually the first thing you open, because it's the fastest way to spot where activity is concentrated — or where it's suspiciously silent.</p>
+  </div>
+
+  <div class="subblock reveal">
+    <div class="subhead"><span class="num">5.2</span><h3>Tiers &amp; Nodes</h3></div>
+    <p class="desc">A <strong style="color:var(--text)">Tier</strong> is the high-level entity — a logical service, like "checkout-api." A <strong style="color:var(--text)">Node</strong> is a specific running instance configured underneath that tier — one JVM, one process. One tier can have many nodes; that's how you scale horizontally and still see it all as one thing.</p>
+  </div>
+
+  <div class="subblock reveal">
+    <div class="subhead"><span class="num">5.3</span><h3>Business Transactions</h3></div>
+    <p class="desc">A business transaction is a real user-facing call — a web request or REST API hit — tracked end to end across every tier it touches. The scorecard view color-codes health at a glance:</p>
+    <div class="scorecard-row">
+      <div class="scorepill green"><span class="sw"></span> Healthy — within baseline</div>
+      <div class="scorepill yellow"><span class="sw"></span> Slow — response time drifting</div>
+      <div class="scorepill red"><span class="sw"></span> Errors — failing or breaching threshold</div>
+    </div>
+    <p class="desc">Load a few thousand threads through a tool like JMeter and watch the errors-per-minute column and response time column move together — that relationship is the whole story of "is this holding up under traffic."</p>
+  </div>
+
+  <div class="subblock reveal">
+    <div class="subhead"><span class="num">5.4</span><h3>Transaction Snapshots &amp; Call Graphs</h3></div>
+    <p class="desc">A snapshot is a recorded execution trace of one specific transaction instance, captured over a monitoring window so you can drill into exactly what happened, method by method — line number, class, type, and total time spent.</p>
+    <div class="callgraph-legend">
+      <div class="legend-item"><span class="legend-swatch blue"></span> Full call graph — complete instrumented trace</div>
+      <div class="legend-item"><span class="legend-swatch grey"></span> Partial call graph — still enough to point at the issue</div>
+    </div>
+    <p class="desc" style="margin-top:12px;">Even a partial call graph is useful: AppDynamics summarizes it on the transaction overview page and flags the likely problem area, so you're not left with nothing just because the full trace wasn't captured — though drill-down only works for tiers that actually have an agent configured, not the ones sitting dark.</p>
+  </div>
+
+  <div class="subblock reveal">
+    <div class="subhead"><span class="num">5.5</span><h3>Health Rules &amp; Violations</h3></div>
+    <p class="desc">A health rule defines a threshold against a baseline — for example, average response time within a normal band versus a critical band that might be 3 or 5 seconds depending on the transaction. Breach it, and a violation fires at the transaction level; you can wire automated actions to run the moment that happens.</p>
+    <div class="health-band"><div class="hb-green"></div><div class="hb-yellow"></div><div class="hb-red"></div></div>
+    <div class="health-labels"><span>Baseline / Healthy</span><span>Warning</span><span>Critical</span></div>
+    <p class="desc" style="margin-top:14px;">Anomaly detection layers machine learning on top of static thresholds, catching drift that a fixed number would miss entirely.</p>
+  </div>
+
+  <div class="subblock reveal">
+    <div class="subhead"><span class="num">5.6</span><h3>JVM, Heap &amp; Garbage Collection</h3></div>
+    <p class="desc">For Java tiers, the JVM's memory story splits into two halves — and knowing which half is leaking tells you what kind of problem you actually have.</p>
+    <div class="jvm-split">
+      <div class="jvm-box">
+        <h4>Heap Memory</h4>
+        <ul><li>Young Generation — short-lived objects</li><li>Old Generation — long-lived survivors</li><li>Garbage collection reclaims unreferenced objects here</li></ul>
+      </div>
+      <div class="jvm-box">
+        <h4>Non-Heap Memory</h4>
+        <ul><li>Permanent Generation / Metaspace</li><li>Class metadata and JVM internals live here</li><li>A leak here looks very different from a heap leak</li></ul>
+      </div>
+    </div>
+    <p class="desc" style="margin-top:14px;">Major and minor garbage collection cycles run at different frequencies and cost — automatic leak detection watches the pattern of GC activity over time, and a heap dump lets you freeze the moment and inspect exactly what's being held in memory and why.</p>
+  </div>
+
+  <div class="subblock reveal">
+    <div class="subhead"><span class="num">5.7</span><h3>Diagnostic Sessions &amp; War Rooms</h3></div>
+    <p class="desc">When a health rule breaches and the standard snapshot isn't enough, start a <strong style="color:var(--text)">diagnostic session</strong> to capture deeper data — including thread and heap dump analysis — for the specific window when things went wrong.</p>
+    <p class="desc">A <strong style="color:var(--text)">War Room</strong> is the collaborative space for what happens next: pull in the right people, attach the relevant charts and documents, and work the root cause analysis (RCA) together in one place instead of six different Slack threads.</p>
+  </div>
+</section>
+
+<!-- ================= QUIZ ================= -->
+<section class="section quiz-section" id="quiz">
+  <div class="quiz-header">
+    <div class="reactor-mini">
+      <svg viewBox="0 0 340 340">
+        <g class="ring-outer" stroke="#1b2a38" fill="none"><circle cx="170" cy="170" r="160" stroke="#33e6ff" stroke-width="3" stroke-dasharray="10 14" opacity="0.6"/></g>
+        <g class="core-glow"><circle cx="170" cy="170" r="60" fill="url(#coreGrad)"/><polygon points="170,120 200,150 190,190 150,190 140,150" fill="#04141a" stroke="#33e6ff" stroke-width="1.5"/></g>
+      </svg>
+    </div>
+    <div class="eyebrow" style="justify-content:center;">06 — SUIT DIAGNOSTIC</div>
+    <h2 class="title" style="font-size:clamp(26px,4vw,40px);">Charge the Reactor: 10-Question Quiz</h2>
+    <p class="lead" style="margin:0 auto 30px;text-align:center;">Every correct answer charges the core. Get through all ten and find out which Mark you just became.</p>
+    <div class="charge-track"><div class="charge-fill" id="chargeFill"></div></div>
+    <div class="charge-label" id="chargeLabel">CORE CHARGE: 0%</div>
+  </div>
+
+  <div class="quiz-card" id="quizCard">
+    <div class="quiz-progress" id="quizProgress">QUESTION 1 / 10</div>
+    <div class="quiz-q" id="quizQ"></div>
+    <div class="quiz-opts" id="quizOpts"></div>
+    <div class="quiz-explain" id="quizExplain"></div>
+    <div class="quiz-nextrow">
+      <button class="btn" id="quizNextBtn" style="display:none;" onclick="nextQuestion()">Next Question →</button>
+    </div>
+
+    <div class="quiz-result" id="quizResult">
+      <div class="reactor-mini" style="margin-bottom:6px;">
+        <svg viewBox="0 0 340 340">
+          <g class="ring-mid" stroke="#ffb627" fill="none"><circle cx="170" cy="170" r="128" stroke-width="3" stroke-dasharray="2 10"/></g>
+          <g class="core-glow"><circle cx="170" cy="170" r="55" fill="url(#coreGrad)"/></g>
+        </svg>
+      </div>
+      <div class="score" id="finalScore"></div>
+      <div class="rank" id="finalRank"></div>
+      <p class="verdict" id="finalVerdict"></p>
+      <button class="btn ghost" onclick="restartQuiz()">Run Diagnostic Again</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="brand"><span class="dot"></span> APPDYNAMICS ACADEMY</div>
+  <p>SELF-STUDY FIELD MANUAL // BUILT FROM FIELD NOTES, ONE SCROLL AT A TIME</p>
+  <div class="cta-row">
+    <button class="btn" onclick="scrollToId('hero')">↑ Back to the Core</button>
+  </div>
+</footer>
+
+<script>
+/* ---------- smooth scroll helper ---------- */
+function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+
+/* ---------- power bar ---------- */
+const powerBar = document.getElementById('powerBar');
+function updatePowerBar(){
+  const h = document.documentElement;
+  const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  powerBar.style.width = scrolled + '%';
+}
+window.addEventListener('scroll', updatePowerBar);
+updatePowerBar();
+
+/* ---------- reveal on scroll ---------- */
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); } });
+},{threshold:0.15});
+revealEls.forEach(el=>io.observe(el));
+
+/* ---------- rail nav active state + click ---------- */
+const sections = ['hero','overview','architecture','install','agents','portal','quiz'];
+const railButtons = document.querySelectorAll('.railnav button');
+railButtons.forEach(btn=>{
+  btn.addEventListener('click',()=>scrollToId(btn.dataset.target));
+});
+const secIO = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      railButtons.forEach(b=>b.classList.toggle('active', b.dataset.target===entry.target.id));
+    }
+  });
+},{threshold:0.4});
+sections.forEach(id=>{ const el=document.getElementById(id); if(el) secIO.observe(el); });
+
+/* ================= QUIZ ================= */
+const questions = [
+  {
+    q: "What does APM stand for in the AppDynamics world?",
+    opts: ["Application Performance Monitoring/Management", "Automated Process Machine", "App Provisioning Module", "Advanced Packet Metrics"],
+    correct: 0,
+    explain: "APM = Application Performance Monitoring (or Management) — watching how software behaves in production and catching problems before users report them."
+  },
+  {
+    q: "In the AppDynamics architecture, what role does the Controller play?",
+    opts: ["A local logging file on each server", "The central brain that stores config and metrics and serves the UI", "A type of agent installed on databases only", "A browser plugin for end users"],
+    correct: 1,
+    explain: "The Controller is the central nervous system — it stores configuration, tiers, nodes, health rules, and metric history, and it serves the dashboard you interact with."
+  },
+  {
+    q: "Which agent monitors host-level hardware — CPU, memory, disk I/O, and network?",
+    opts: ["Java Agent", "Browser Agent", "Machine Agent", "DB Agent"],
+    correct: 2,
+    explain: "The Machine Agent watches the underlying server. Without it running, a node's Servers tab in the Controller stays empty even when the app agent is fine."
+  },
+  {
+    q: "What's the real difference between a Tier and a Node?",
+    opts: ["They're the same thing, just different names", "A Tier is a logical service; a Node is a specific running instance under that tier", "A Node contains many Tiers", "A Tier only exists in SaaS deployments"],
+    correct: 1,
+    explain: "A Tier is the high-level service grouping (like \"checkout-api\"). A Node is one actual running instance configured underneath it — you can have many nodes per tier."
+  },
+  {
+    q: "What does MTTR stand for, and why does it matter so much?",
+    opts: ["Mean Time To Repair/Recovery — the real metric APM tools are meant to shrink", "Maximum Threshold Trigger Rate", "Machine Traffic Test Report", "Monitored Transaction Total Rate"],
+    correct: 0,
+    explain: "MTTR is the clock that starts when something breaks and doesn't stop until it's fixed. Collecting metrics is easy — cutting MTTR by finding root cause fast is the actual job."
+  },
+  {
+    q: "In a call graph, what does a grey (partial) call graph mean versus a blue (full) one?",
+    opts: ["Grey means the tier is offline entirely", "Blue is a complete instrumented trace; grey is incomplete but still points toward the likely issue", "Grey means it's a database call, blue means it's a browser call", "There's no functional difference"],
+    correct: 1,
+    explain: "A full (blue) call graph gives a complete trace. A partial (grey) one is still summarized on the overview page and flags where the problem likely is — even without full instrumentation."
+  },
+  {
+    q: "What triggers a Health Rule violation?",
+    opts: ["An agent restarting", "A metric breaching a defined threshold or baseline band, like response time exceeding a critical limit", "Logging in to the Controller GUI", "Creating a new Tier"],
+    correct: 1,
+    explain: "A Health Rule defines thresholds against a baseline. When a metric — say, average response time — breaches the critical band, a violation fires and can trigger automated actions."
+  },
+  {
+    q: "In JVM memory, which generation lives inside the Heap?",
+    opts: ["Permanent Generation / Metaspace", "Young Generation and Old Generation", "Thread Pool Generation", "Metadata Generation"],
+    correct: 1,
+    explain: "Heap memory splits into Young Generation (short-lived objects) and Old Generation (long-lived survivors). Permanent Generation / Metaspace lives in Non-Heap instead."
+  },
+  {
+    q: "What's the core difference between Real User Monitoring (RUM) and Synthetic Monitoring?",
+    opts: ["RUM watches real live traffic; Synthetic runs a scripted browser flow on a schedule", "They're the exact same feature under two names", "Synthetic only works on mobile devices", "RUM requires no agent at all"],
+    correct: 0,
+    explain: "RUM passively observes real users hitting your app right now. Synthetic monitoring proactively runs a scripted job simulating a user flow — even when no real traffic exists, like 3 a.m."
+  },
+  {
+    q: "What is a War Room used for?",
+    opts: ["Installing new agents remotely", "A collaborative space to pull in people, charts, and documents for root cause analysis during an incident", "A billing dashboard for SaaS licenses", "A sandbox environment for testing new health rules only"],
+    correct: 1,
+    explain: "A War Room is where the team actually works an incident together — people, charts, and docs in one place, driving toward root cause analysis (RCA)."
+  }
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+const quizProgress = document.getElementById('quizProgress');
+const quizQ = document.getElementById('quizQ');
+const quizOpts = document.getElementById('quizOpts');
+const quizExplain = document.getElementById('quizExplain');
+const quizNextBtn = document.getElementById('quizNextBtn');
+const quizResult = document.getElementById('quizResult');
+const quizCardInner = document.getElementById('quizCard');
+const chargeFill = document.getElementById('chargeFill');
+const chargeLabel = document.getElementById('chargeLabel');
+
+function renderQuestion(){
+  answered = false;
+  const item = questions[currentQ];
+  quizProgress.textContent = `QUESTION ${currentQ+1} / ${questions.length}`;
+  quizQ.textContent = item.q;
+  quizOpts.innerHTML = '';
+  quizExplain.style.display = 'none';
+  quizExplain.textContent = '';
+  quizNextBtn.style.display = 'none';
+
+  item.opts.forEach((optText, idx)=>{
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.textContent = optText;
+    b.addEventListener('click', ()=> selectAnswer(idx));
+    quizOpts.appendChild(b);
+  });
+}
+
+function selectAnswer(idx){
+  if(answered) return;
+  answered = true;
+  const item = questions[currentQ];
+  const buttons = quizOpts.querySelectorAll('.opt');
+  buttons.forEach((b,i)=>{
+    b.disabled = true;
+    if(i === item.correct) b.classList.add('correct');
+    else if(i === idx) b.classList.add('wrong');
+  });
+  if(idx === item.correct){
+    score++;
+    updateCharge();
+  }
+  quizExplain.textContent = item.explain;
+  quizExplain.style.display = 'block';
+  quizNextBtn.textContent = currentQ === questions.length-1 ? 'See Results →' : 'Next Question →';
+  quizNextBtn.style.display = 'inline-block';
+}
+
+function updateCharge(){
+  const pct = Math.round((score/questions.length)*100);
+  chargeFill.style.width = pct + '%';
+  chargeLabel.textContent = 'CORE CHARGE: ' + pct + '%';
+}
+
+function nextQuestion(){
+  currentQ++;
+  if(currentQ >= questions.length){
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResult(){
+  quizProgress.style.display='none';
+  quizQ.style.display='none';
+  quizOpts.style.display='none';
+  quizExplain.style.display='none';
+  quizNextBtn.style.display='none';
+  quizResult.style.display='block';
+
+  document.getElementById('finalScore').textContent = `SCORE: ${score} / ${questions.length}`;
+  let rank, verdict;
+  if(score <= 3){
+    rank = 'MARK I — TIN CAN';
+    verdict = "You built the suit in a cave. With a box of scraps. It flies, sort of. Scroll back up and read the Overview and Architecture sections again — the fundamentals are right there.";
+  } else if(score <= 6){
+    rank = 'MARK III — BATTLE TESTED';
+    verdict = "Solid ground floor. You know your Controller from your Machine Agent. A pass through the Portal Navigation section will tighten up the gaps in health rules and call graphs.";
+  } else if(score <= 9){
+    rank = 'MARK XLII — AUTONOMOUS';
+    verdict = "You could walk into a war room and actually be useful. A couple of these caught you off guard — but the instincts are there and they're sharp.";
+  } else {
+    rank = 'MARK L — BLEEDING EDGE';
+    verdict = "Perfect score. Nanotech-suit-caliber understanding of the Controller, the agents, the portal, and how it all fits together. Go set up a health rule on something real.";
+  }
+  document.getElementById('finalRank').textContent = rank;
+  document.getElementById('finalVerdict').textContent = verdict;
+}
+
+function restartQuiz(){
+  currentQ = 0; score = 0; answered = false;
+  chargeFill.style.width = '0%';
+  chargeLabel.textContent = 'CORE CHARGE: 0%';
+  quizProgress.style.display='block';
+  quizQ.style.display='block';
+  quizOpts.style.display='flex';
+  quizResult.style.display='none';
+  renderQuestion();
+}
+
+renderQuestion();
+</script>
+
+</body>
+</html>
