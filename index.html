@@ -630,8 +630,29 @@ body.intro-active{overflow:hidden;}
 <!-- ================= OVERVIEW ================= -->
 <section class="section" id="overview">
   <div class="eyebrow reveal">01 — SYSTEM OVERVIEW</div>
-  <h2 class="title reveal">What AppDynamics Actually Watches</h2>
-  <p class="lead reveal">APM stands for <strong style="color:var(--text)">Application Performance Monitoring</strong> (some say Management) — the discipline of watching how software actually behaves in production, and catching the failure before your users report it for you. AppDynamics is a suit built for exactly that: instrumented sensors on every tier, feeding one brain, so you can find the bottleneck before it finds you.</p>
+  
+  <!-- Flex container to hold text and video side-by-side -->
+  <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;">
+    
+    <!-- Text Content -->
+    <div style="flex: 1 1 600px;">
+      <h2 class="title reveal">What AppDynamics Actually Watches</h2>
+      <p class="lead reveal">APM stands for <strong style="color:var(--text)">Application Performance Monitoring</strong> (some say Management) — the discipline of watching how software actually behaves in production, and catching the failure before your users report it for you. AppDynamics is a suit built for exactly that: instrumented sensors on every tier, feeding one brain, so you can find the bottleneck before it finds you.</p>
+    </div>
+
+    <!-- Video Container (Moved to Top Right) -->
+    <div class="heygen-avatar reveal" style="flex: 0 0 320px;">
+      <iframe
+        id="heygenAvatarFrame"
+        src="https://app.heygen.com/embeds/e8d24b22e19742e1a1acf426d419abab"
+        title="AI Avatar Video"
+        frameborder="0"
+        allow="autoplay; encrypted-media; fullscreen;"
+        allowfullscreen
+        style="width: 100%; aspect-ratio: 16/9; border-radius: 8px;">
+      </iframe>
+    </div>
+  </div>
 
   <div class="grid cols-4 reveal">
     <div class="card">
@@ -678,6 +699,7 @@ body.intro-active{overflow:hidden;}
     </div>
   </div>
 </section>
+
 
 <!-- ================= ARCHITECTURE ================= -->
 <section class="section" id="architecture">
@@ -1177,8 +1199,8 @@ function restartQuiz(){
   chargeLabel.textContent = 'CORE CHARGE: 0%';
   quizProgress.style.display='block';
   quizQ.style.display='block';
-  AquizOpts.style.display='flex';
-  quizResult.style.display='none';A
+  quizOpts.style.display='flex';
+  quizResult.style.display='none';
   renderQuestion();
 }
 
